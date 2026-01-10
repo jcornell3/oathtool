@@ -1,0 +1,7 @@
+[Files]
+"..\dist\oathtool.exe" "oathtool.exe"
+"AppxManifest.xml" "AppxManifest.xml"
+"Assets\StoreLogo.png" "Assets\StoreLogo.png"
+"Assets\Square44x44Logo.png" "Assets\Square44x44Logo.png"
+"Assets\Square150x150Logo.png" "Assets\Square150x150Logo.png"
+"Assets\Wide310x150Logo.png" "Assets\Wide310x150Logo.png"
