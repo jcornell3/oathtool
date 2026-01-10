@@ -8,19 +8,28 @@ Since the oathtool MSIX package is not signed with a trusted certificate, Window
 
 If the **Install** button is greyed out even with Developer Mode enabled, the package needs to be signed first.
 
-**Quick fix:**
+**Quick fix for users who downloaded from GitHub:**
 
-```powershell
-# Run this script (included in the repository)
-.\create-test-cert-and-sign.ps1
-```
+1. Download both files from the `GitHub repository <https://github.com/jaraco/oathtool>`_:
+   - The MSIX package (e.g., ``oathtool-1.0.2.msix``)
+   - The fix script: ``FIX-MSIX-INSTALL.ps1``
+2. Place both files in the same directory
+3. **Right-click** ``FIX-MSIX-INSTALL.ps1``
+4. Select **"Run as Administrator"**
+5. Wait for the script to complete (creates certificate, installs to Trusted Root, signs package)
+6. Double-click the MSIX file to install
 
-This will:
-1. Create a test certificate matching the package publisher
-2. Install it to your Trusted People store
-3. Sign the MSIX package
+**What the script does:**
+1. Creates a test certificate matching the package publisher (CN=TestPublisher)
+2. Installs it to your Trusted Root Certification Authorities store (requires Admin)
+3. Signs the MSIX package
+4. Provides installation instructions
 
 **Then try installing again** - the Install button should now work!
+
+**Note:** The script requires Administrator privileges because it installs the certificate
+to the LocalMachine\Root store, which allows all users on the system to trust packages
+signed with this certificate.
 
 ---
 

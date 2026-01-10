@@ -411,30 +411,44 @@ from GitHub releases for tagged versions.
 
 **⚠️ Important: Unsigned Package**
 
-The MSIX package is not signed with a trusted certificate. You must enable
-Developer Mode to install it.
+The MSIX packages distributed via GitHub releases are **unsigned** (no trusted certificate).
+This is normal for open-source distribution. You have two options:
 
-**Step 1: Enable Developer Mode**
+**Option 1: Enable Developer Mode (Recommended - Easiest for End Users)**
+
+This allows Windows to install unsigned packages from any source.
 
 Windows 11:
   1. Open **Settings** (Win + I)
   2. Go to **System** → **For developers** (or **System** → **Advanced** in some builds)
   3. Toggle **Developer Mode** to **On**
   4. Click **Yes** on confirmation
+  5. Download and install the MSIX package
 
 Windows 10:
   1. Open **Settings** (Win + I)
   2. Go to **Update & Security** → **For developers**
   3. Select **Developer mode**
   4. Click **Yes** on confirmation
+  5. Download and install the MSIX package
 
-**Step 2: Sign the Package** (if Install button is greyed out)
+**Note:** Developer Mode is only needed for installation. You can disable it
+afterward and the app will continue to work.
 
-If the Install button is greyed out, run this from the repository::
+**Option 2: Create Self-Signed Certificate** (if you prefer not to use Developer Mode)
 
-    .\create-test-cert-and-sign.ps1
+If the Install button is greyed out even with Developer Mode enabled, or if you
+prefer not to enable Developer Mode, you can create a self-signed certificate and
+sign the package yourself.
 
-This creates a test certificate and signs the package.
+**⚠️ Requires Administrator privileges and downloading additional files from the repository.**
+
+1. Download the MSIX package from GitHub Releases
+2. Download ``FIX-MSIX-INSTALL.ps1`` from the `repository <https://github.com/jaraco/oathtool>`_
+3. Place both files in the same directory
+4. **Right-click** ``FIX-MSIX-INSTALL.ps1`` and select **"Run as Administrator"**
+5. The script will create a certificate, install it to Trusted Root, and sign the package
+6. Double-click the MSIX to install
 
 **Step 3: Install the Package**
 
