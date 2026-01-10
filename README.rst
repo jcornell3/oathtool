@@ -24,11 +24,26 @@ Usage
 
 Command-line::
 
-    $ python -m oathtool $key
+    # Generate TOTP code
+    $ python -m oathtool JBSWY3DPEHPK3PXP
+    123456
+
+    # Show version
+    $ python -m oathtool --version
+    oathtool 0.1.dev478
+
+    # Show help
+    $ python -m oathtool --help
+
+    # Read key from stdin (more secure - key not in process list)
+    $ echo JBSWY3DPEHPK3PXP | python -m oathtool
+    123456
 
 API::
 
-    >>> oathtool.generate_otp(key)
+    >>> import oathtool
+    >>> oathtool.generate_otp('JBSWY3DPEHPK3PXP')
+    '123456'
 
 Create standalone script (Unix)::
 
