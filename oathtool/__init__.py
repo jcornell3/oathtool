@@ -1,4 +1,6 @@
+import argparse
 import base64
+import binascii
 import hashlib
 import string
 import struct
@@ -56,7 +58,14 @@ def generate_otp(key, hotp_value=None):
     # http://opensource.apple.com//source/python/python-3/python/Modules/structmodule.c
     hotp_value = struct.pack('>q', hotp_value or int(time.time() / 30))
     # convert base32 key to bytes
-    key = base64.b32decode(pad(clean(key)), casefold=True)
+    try:
+        key = base64.b32decode(pad(clean(key)), casefold=True)
+    except binascii.Error as e:
+        raise ValueError(
+            f"Invalid secret key: {e}\n"
+            "Secret keys must be valid Base32 format (A-Z, 2-7).\n"
+            "Example: JBSWY3DPEHPK3PXP"
+        )
     # generate HMAC-SHA1 from HOTP based on key
     HMAC = hmac(key, hotp_value)
     # compute hash truncation
@@ -67,23 +76,50 @@ def generate_otp(key, hotp_value=None):
     )
 
 
-def _one(items):
-    (item,) = items
-    return item
-
-
-def get_key_arg():
-    return _one(sys.argv[1:])
-
-
-def get_key_stdin():
-    return not sys.stdin.isatty() and sys.stdin.read().strip()
+def get_version():
+    """Get package version from importlib.metadata."""
+    try:
+        from importlib.metadata import version
+        return version('oathtool')
+    except Exception:
+        return 'unknown'
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description='Generate TOTP (Time-based One-Time Password) codes',
+        epilog='Examples:\n'
+               '  oathtool JBSWY3DPEHPK3PXP\n'
+               '  echo JBSWY3DPEHPK3PXP | oathtool',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        'key',
+        nargs='?',
+        help='Base32-encoded secret key (e.g., JBSWY3DPEHPK3PXP). '
+             'If not provided, reads from stdin.'
+    )
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=f'oathtool {get_version()}'
+    )
+
+    args = parser.parse_args()
+
+    # Get key from stdin if not provided as argument
+    if not sys.stdin.isatty() and not args.key:
+        key = sys.stdin.read().strip()
+    elif args.key:
+        key = args.key
+    else:
+        parser.error('provide secret key as argument or via stdin')
+
+    if not key:
+        parser.error('secret key cannot be empty')
+
     try:
-        key = get_key_stdin() or get_key_arg()
-    except ValueError:
-        print('provide secret key as only arg or via stdin')
+        print(generate_otp(key))
+    except ValueError as e:
+        print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
-    print(generate_otp(key))

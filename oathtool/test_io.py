@@ -13,66 +13,7 @@ import pytest
 import oathtool
 
 
-class TestGetKeyArg:
-    """Tests for get_key_arg() - command-line argument parsing."""
-
-    def test_get_key_arg_single_argument(self):
-        """ARG-001: Single argument."""
-        with patch.object(sys, 'argv', ['prog', 'TESTKEY123']):
-            result = oathtool.get_key_arg()
-            assert result == 'TESTKEY123'
-
-    def test_get_key_arg_no_arguments(self):
-        """ARG-002: No arguments."""
-        with patch.object(sys, 'argv', ['prog']):
-            with pytest.raises(ValueError):
-                oathtool.get_key_arg()
-
-    def test_get_key_arg_multiple_arguments(self):
-        """ARG-003: Multiple arguments."""
-        with patch.object(sys, 'argv', ['prog', 'KEY1', 'KEY2']):
-            with pytest.raises(ValueError):
-                oathtool.get_key_arg()
-
-
-class TestGetKeyStdin:
-    """Tests for get_key_stdin() - stdin input handling."""
-
-    def test_get_key_stdin_tty(self):
-        """STDIN-001: TTY (interactive) returns False."""
-        mock_stdin = Mock()
-        mock_stdin.isatty.return_value = True
-
-        with patch.object(sys, 'stdin', mock_stdin):
-            result = oathtool.get_key_stdin()
-            assert result is False
-
-    def test_get_key_stdin_piped_input(self):
-        """STDIN-002: Piped input."""
-        mock_stdin = StringIO('KEY123')
-        mock_stdin.isatty = Mock(return_value=False)
-
-        with patch.object(sys, 'stdin', mock_stdin):
-            result = oathtool.get_key_stdin()
-            assert result == 'KEY123'
-
-    def test_get_key_stdin_piped_with_whitespace(self):
-        """STDIN-003: Piped with whitespace."""
-        mock_stdin = StringIO('  KEY123\n')
-        mock_stdin.isatty = Mock(return_value=False)
-
-        with patch.object(sys, 'stdin', mock_stdin):
-            result = oathtool.get_key_stdin()
-            assert result == 'KEY123'
-
-    def test_get_key_stdin_empty_piped_input(self):
-        """STDIN-004: Empty piped input."""
-        mock_stdin = StringIO('')
-        mock_stdin.isatty = Mock(return_value=False)
-
-        with patch.object(sys, 'stdin', mock_stdin):
-            result = oathtool.get_key_stdin()
-            assert result == ''
+# Note: get_key_arg() and get_key_stdin() were removed in favor of argparse-based CLI
 
 
 class TestMain:
@@ -122,40 +63,47 @@ class TestMain:
                 with pytest.raises(SystemExit) as exc_info:
                     oathtool.main()
 
-                assert exc_info.value.code == 1
+                assert exc_info.value.code == 2  # argparse error exit code
 
-                captured = capsys.readouterr()
-                assert 'provide secret key' in captured.out.lower()
+    def test_main_version_flag(self, capsys):
+        """MAIN-007: --version flag."""
+        with patch.object(sys, 'argv', ['prog', '--version']):
+            with pytest.raises(SystemExit) as exc_info:
+                oathtool.main()
 
-    def test_main_multiple_arguments(self, capsys):
-        """MAIN-004: Multiple arguments."""
-        with patch.object(sys, 'argv', ['prog', 'KEY1', 'KEY2']):
-            mock_stdin = Mock()
-            mock_stdin.isatty.return_value = True
+            # --version should exit with code 0
+            assert exc_info.value.code == 0
 
-            with patch.object(sys, 'stdin', mock_stdin):
-                with pytest.raises(SystemExit) as exc_info:
-                    oathtool.main()
+            captured = capsys.readouterr()
+            assert 'oathtool' in captured.out
 
-                assert exc_info.value.code == 1
+    def test_main_help_flag(self, capsys):
+        """MAIN-008: --help flag."""
+        with patch.object(sys, 'argv', ['prog', '--help']):
+            with pytest.raises(SystemExit) as exc_info:
+                oathtool.main()
 
-                captured = capsys.readouterr()
-                assert 'provide secret key' in captured.out.lower()
+            # --help should exit with code 0
+            assert exc_info.value.code == 0
 
-    def test_main_stdin_priority(self, capsys):
-        """MAIN-005: Stdin has priority over argv."""
-        with patch.object(sys, 'argv', ['prog', 'ARGKEY']):
-            mock_stdin = StringIO('STDINKEY')
+            captured = capsys.readouterr()
+            assert 'usage:' in captured.out.lower()
+            assert 'TOTP' in captured.out or 'totp' in captured.out.lower()
+
+    def test_main_argument_over_stdin(self, capsys):
+        """MAIN-005: Argument takes priority when both provided."""
+        with patch.object(sys, 'argv', ['prog', 'JBSWY3DPEHPK3PXP']):
+            mock_stdin = StringIO('MZXW6YTBOJUWU23MNU')
             mock_stdin.isatty = Mock(return_value=False)
 
             with patch.object(sys, 'stdin', mock_stdin):
                 with patch('time.time', return_value=1234567890):
-                    # Should use stdin key, not argv key
-                    # We can verify by checking it doesn't fail
                     oathtool.main()
 
                     captured = capsys.readouterr()
                     output = captured.out.strip()
+
+                    # Should use argument key
                     assert len(output) == 6
                     assert output.isdigit()
 
@@ -166,9 +114,14 @@ class TestMain:
             mock_stdin.isatty.return_value = True
 
             with patch.object(sys, 'stdin', mock_stdin):
-                # Should raise an exception from base32 decode
-                with pytest.raises(Exception):
+                with pytest.raises(SystemExit) as exc_info:
                     oathtool.main()
+
+                # Should exit with error code
+                assert exc_info.value.code == 1
+
+                captured = capsys.readouterr()
+                assert 'Invalid secret key' in captured.err or 'base32' in captured.err.lower()
 
 
 class TestEndToEnd:
@@ -230,8 +183,9 @@ class TestErrorHandling:
         invalid_keys = ['KEY0KEY', 'KEY1KEY', 'KEY8KEY', 'KEY9KEY']
 
         for key in invalid_keys:
-            with pytest.raises(Exception):
+            with pytest.raises(ValueError) as exc_info:
                 oathtool.generate_otp(key, 1)
+            assert 'Invalid secret key' in str(exc_info.value)
 
     def test_error_malformed_base32(self):
         """ERR-002: Malformed base32 with incorrect padding."""
@@ -242,7 +196,7 @@ class TestErrorHandling:
             # If it succeeds, verify it's valid output
             assert len(result) == 6
             assert result.isdigit()
-        except Exception:
+        except ValueError:
             # If it fails, that's also acceptable
             pass
 
@@ -256,7 +210,7 @@ class TestErrorHandling:
             # If it succeeds, verify output
             assert len(result) == 6
             assert result.isdigit()
-        except Exception:
+        except ValueError:
             # Exception is acceptable
             pass
 

@@ -182,33 +182,7 @@ class TestClean:
         assert result == 'AB\tCD\n'
 
 
-class TestOne:
-    """Tests for the _one() helper function."""
-
-    def test_one_single_item_list(self):
-        """ONE-001: Single item list."""
-        result = oathtool._one(['item'])
-        assert result == 'item'
-
-    def test_one_empty_list(self):
-        """ONE-002: Empty list."""
-        with pytest.raises(ValueError):
-            oathtool._one([])
-
-    def test_one_multiple_items(self):
-        """ONE-003: Multiple items."""
-        with pytest.raises(ValueError):
-            oathtool._one(['a', 'b'])
-
-    def test_one_tuple_with_one_item(self):
-        """ONE-004: Tuple with one item."""
-        result = oathtool._one(('item',))
-        assert result == 'item'
-
-    def test_one_set_with_one_item(self):
-        """ONE-005: Set with one item."""
-        result = oathtool._one({'item'})
-        assert result == 'item'
+# Note: TestOne class removed because _one() function was replaced by argparse
 
 
 class TestGenerateOTP:
