@@ -5,8 +5,8 @@
          IgnorableNamespaces="uap rescap">
 
   <Identity Name="com.jaraco.oathtool"
-            Version="1.0.1.0"
-            Publisher="CN=Jason R. Coombs"
+            Version="1.0.2.0"
+            Publisher="CN=TestPublisher"
             ProcessorArchitecture="x64" />
 
   <Properties>

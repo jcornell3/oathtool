@@ -418,7 +418,7 @@ Developer Mode to install it.
 
 Windows 11:
   1. Open **Settings** (Win + I)
-  2. Go to **Privacy & security** → **For developers**
+  2. Go to **System** → **For developers** (or **System** → **Advanced** in some builds)
   3. Toggle **Developer Mode** to **On**
   4. Click **Yes** on confirmation
 
@@ -428,7 +428,15 @@ Windows 10:
   3. Select **Developer mode**
   4. Click **Yes** on confirmation
 
-**Step 2: Install the Package**
+**Step 2: Sign the Package** (if Install button is greyed out)
+
+If the Install button is greyed out, run this from the repository::
+
+    .\create-test-cert-and-sign.ps1
+
+This creates a test certificate and signs the package.
+
+**Step 3: Install the Package**
 
 Download and install:
 

@@ -4,13 +4,33 @@ Since the oathtool MSIX package is not signed with a trusted certificate, Window
 
 ---
 
-## Quick Solution: Enable Developer Mode
+## ⚠️ Install Button Greyed Out?
+
+If the **Install** button is greyed out even with Developer Mode enabled, the package needs to be signed first.
+
+**Quick fix:**
+
+```powershell
+# Run this script (included in the repository)
+.\create-test-cert-and-sign.ps1
+```
+
+This will:
+1. Create a test certificate matching the package publisher
+2. Install it to your Trusted People store
+3. Sign the MSIX package
+
+**Then try installing again** - the Install button should now work!
+
+---
+
+## Solution: Enable Developer Mode + Sign Package
 
 ### Step 1: Enable Developer Mode
 
 **Windows 11:**
 1. Open **Settings** (Win + I)
-2. Go to **Privacy & security** → **For developers**
+2. Go to **System** → **For developers** (or **System** → **Advanced** in some Windows 11 builds)
 3. Toggle **Developer Mode** to **On**
 4. Click **Yes** on the confirmation dialog
 5. Wait for Windows to install developer mode packages
