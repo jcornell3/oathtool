@@ -60,14 +60,22 @@ The workflow will:
 
 ### For Development/Testing (Unsigned)
 
-1. Enable Developer Mode in Windows Settings:
-   - Settings → Privacy & Security → For developers → Developer Mode
+**⚠️ The package is unsigned and requires Developer Mode.**
 
-2. Install the package:
+**Quick Steps:**
+
+1. **Enable Developer Mode** in Windows Settings:
+   - **Windows 11:** Settings → Privacy & security → For developers → Developer Mode
+   - **Windows 10:** Settings → Update & Security → For developers → Developer mode
+
+2. **Install the package:**
    ```powershell
    Add-AppxPackage -Path "dist\oathtool-1.2.3.msix"
    ```
    Or simply double-click the .msix file.
+
+**For detailed installation instructions, troubleshooting, and alternative methods
+(including self-signing), see:** `../INSTALLING_UNSIGNED_MSIX.md`
 
 ### For Production (Signed)
 

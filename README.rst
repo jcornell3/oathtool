@@ -409,15 +409,48 @@ MSIX Package Installation
 For streamlined installation on Windows 10/11, MSIX packages are available
 from GitHub releases for tagged versions.
 
+**⚠️ Important: Unsigned Package**
+
+The MSIX package is not signed with a trusted certificate. You must enable
+Developer Mode to install it.
+
+**Step 1: Enable Developer Mode**
+
+Windows 11:
+  1. Open **Settings** (Win + I)
+  2. Go to **Privacy & security** → **For developers**
+  3. Toggle **Developer Mode** to **On**
+  4. Click **Yes** on confirmation
+
+Windows 10:
+  1. Open **Settings** (Win + I)
+  2. Go to **Update & Security** → **For developers**
+  3. Select **Developer mode**
+  4. Click **Yes** on confirmation
+
+**Step 2: Install the Package**
+
 Download and install:
 
 1. Download the ``.msix`` file from the `GitHub Releases page <https://github.com/jaraco/oathtool/releases>`_
 2. Double-click the ``.msix`` file to install
-3. (Developer Mode required for unsigned packages)
+3. Click **Install** when prompted
+4. The app will appear in your Start Menu
 
 Or install via PowerShell::
 
     Add-AppxPackage -Path oathtool-x.y.z.msix
+
+**Alternative: Use Portable Executable**
+
+If you can't enable Developer Mode, use the standalone ``oathtool.exe`` instead -
+no installation required! Download from GitHub Releases.
+
+**Note:** Developer Mode is only needed for installation. You can disable it
+afterward and the app will continue to work.
+
+**For detailed installation instructions, troubleshooting, and signing options,
+see:** ``INSTALLING_UNSIGNED_MSIX.md``
 
 Building MSIX Package
 ---------------------
