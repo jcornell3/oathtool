@@ -10,7 +10,7 @@ If the **Install** button is greyed out even with Developer Mode enabled, the pa
 
 **Quick fix for users who downloaded from GitHub:**
 
-1. Download both files from the `GitHub repository <https://github.com/jaraco/oathtool>`_:
+1. Download both files from the `GitHub repository <https://github.com/jcornell3/oathtool>`_:
    - The MSIX package (e.g., ``oathtool-1.0.2.msix``)
    - The fix script: ``FIX-MSIX-INSTALL.ps1``
 2. Place both files in the same directory

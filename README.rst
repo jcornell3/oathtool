@@ -444,7 +444,7 @@ sign the package yourself.
 **⚠️ Requires Administrator privileges and downloading additional files from the repository.**
 
 1. Download the MSIX package from GitHub Releases
-2. Download ``FIX-MSIX-INSTALL.ps1`` from the `repository <https://github.com/jaraco/oathtool>`_
+2. Download ``FIX-MSIX-INSTALL.ps1`` from the `repository <https://github.com/jcornell3/oathtool>`_
 3. Place both files in the same directory
 4. **Right-click** ``FIX-MSIX-INSTALL.ps1`` and select **"Run as Administrator"**
 5. The script will create a certificate, install it to Trusted Root, and sign the package
@@ -454,7 +454,7 @@ sign the package yourself.
 
 Download and install:
 
-1. Download the ``.msix`` file from the `GitHub Releases page <https://github.com/jaraco/oathtool/releases>`_
+1. Download the ``.msix`` file from the `GitHub Releases page <https://github.com/jcornell3/oathtool/releases>`_
 2. Double-click the ``.msix`` file to install
 3. Click **Install** when prompted
 4. The app will appear in your Start Menu

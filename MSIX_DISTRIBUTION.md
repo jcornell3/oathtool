@@ -165,7 +165,7 @@ To create a new release with MSIX package:
 
 **For the project:**
 - GitHub Releases are the authoritative source
-- Verify the repository URL: `https://github.com/jaraco/oathtool`
+- Verify the repository URL: `https://github.com/jcornell3/oathtool`
 - Check commit signatures and release tags
 
 ### Self-Signed Certificates
