@@ -33,25 +33,26 @@ signed with this certificate.
 
 ---
 
-## Solution: Enable Developer Mode + Sign Package
+## Recommended Solution: Sign the Package
 
-### Step 1: Enable Developer Mode
+**Important:** Simply enabling Developer Mode is **NOT sufficient**. The MSIX package must be
+signed with a certificate that is installed in Trusted Root Certification Authorities.
 
-**Windows 11:**
-1. Open **Settings** (Win + I)
-2. Go to **System** → **For developers** (or **System** → **Advanced** in some Windows 11 builds)
-3. Toggle **Developer Mode** to **On**
-4. Click **Yes** on the confirmation dialog
-5. Wait for Windows to install developer mode packages
+The easiest approach is to use the provided script to sign the package:
 
-**Windows 10:**
-1. Open **Settings** (Win + I)
-2. Go to **Update & Security** → **For developers**
-3. Select **Developer mode**
-4. Click **Yes** on the confirmation dialog
-5. Wait for installation to complete
+### Step 1: Download Required Files
 
-### Step 2: Install the MSIX Package
+1. Download the MSIX package from GitHub Releases
+2. Download ``FIX-MSIX-INSTALL.ps1`` from the repository
+3. Place both in the same directory
+
+### Step 2: Run the Fix Script
+
+1. **Right-click** ``FIX-MSIX-INSTALL.ps1``
+2. Select **"Run as Administrator"**
+3. Wait for the script to complete (creates cert, installs to Trusted Root, signs package)
+
+### Step 3: Install the MSIX Package
 
 **Method 1: Double-click**
 1. Double-click the `.msix` file
@@ -71,9 +72,10 @@ Add-AppxPackage -Path "C:\path\to\oathtool-1.0.0.msix"
 
 ---
 
-## Alternative: Install Without Developer Mode
+## Alternative: Manual Signing Process
 
-If you can't or don't want to enable Developer Mode, you need to:
+If you prefer to sign the package manually instead of using `FIX-MSIX-INSTALL.ps1`, you can
+follow these steps:
 
 1. Create a self-signed certificate
 2. Install the certificate to Trusted Root
@@ -375,23 +377,20 @@ Remove-Item Cert:\LocalMachine\Root\[THUMBPRINT]
 
 ## FAQ
 
-**Q: Is Developer Mode safe?**
-A: Yes, for personal development machines. Not recommended for enterprise/production systems.
-
-**Q: Can I disable Developer Mode after installing?**
-A: Yes, the app will continue to work. Developer Mode is only needed for installation.
+**Q: Do I need Developer Mode?**
+A: No, Developer Mode is **not** sufficient for unsigned MSIX packages. You must sign the package using `FIX-MSIX-INSTALL.ps1`.
 
 **Q: Will Windows Defender flag this?**
 A: Unsigned executables might trigger SmartScreen. Click "More info" → "Run anyway" if needed.
 
 **Q: Can I install on multiple computers?**
-A: Yes, but each needs Developer Mode enabled or the signed package approach.
+A: Yes, but you must run `FIX-MSIX-INSTALL.ps1` on each computer to sign the package.
 
 **Q: Do I need administrator rights?**
-A: No for installing with Developer Mode. Yes for signing and installing certificates to Trusted Root.
+A: Yes, the `FIX-MSIX-INSTALL.ps1` script requires Administrator privileges to install the certificate to Trusted Root.
 
 **Q: Can I use this on a company/work computer?**
-A: Check with your IT department. Many companies block Developer Mode and unsigned apps.
+A: Check with your IT department. Installing certificates to Trusted Root requires Administrator privileges, which are often restricted on corporate computers. The portable `.exe` may be a better option.
 
 **Q: Is the portable .exe easier?**
 A: Yes! For personal use, `oathtool.exe` requires no installation or special settings.
@@ -402,10 +401,10 @@ A: Yes! For personal use, `oathtool.exe` requires no installation or special set
 
 | Use Case | Recommended Method | Why |
 |----------|-------------------|-----|
-| **Personal use** | Portable .exe | Simplest, no installation |
-| **Development/testing** | Developer Mode + MSIX | Full Windows integration |
-| **Multiple developers** | Self-signed cert + MSIX | Consistent installation |
-| **Public distribution** | Code signed MSIX | Professional, trusted |
+| **Personal use** | Portable .exe | Simplest, no installation, no Admin required |
+| **Development/testing** | Self-signed MSIX via FIX-MSIX-INSTALL.ps1 | Full Windows integration |
+| **Multiple developers** | Self-signed cert + MSIX | Each user runs fix script once |
+| **Public distribution** | Code signed MSIX | Professional, no end-user signing needed |
 | **Microsoft Store** | Store submission | Free signing, auto-updates |
 | **Enterprise deployment** | Code signed MSIX | IT policy compliant |
 
@@ -420,4 +419,4 @@ A: Yes! For personal use, `oathtool.exe` requires no installation or special set
 
 ---
 
-**Summary:** For personal use, the easiest approach is enabling Developer Mode. For distribution to others, consider using the portable `oathtool.exe` or investing in a code signing certificate.
+**Summary:** For personal use, the easiest approach is using the portable `oathtool.exe` (no installation needed). For MSIX installation, run `FIX-MSIX-INSTALL.ps1` as Administrator to sign the package. For distributing to many users, consider investing in a code signing certificate or publishing to the Microsoft Store.

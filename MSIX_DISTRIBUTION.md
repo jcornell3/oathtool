@@ -36,37 +36,34 @@ The GitHub Actions workflow (`.github/workflows/main.yml`) automatically builds 
 
 ## Installation for End Users
 
-End users who download the MSIX package from GitHub Releases have **two options**:
+End users who download the MSIX package from GitHub Releases **must sign the package** before installation.
 
-### Option 1: Enable Developer Mode (Recommended)
+**⚠️ Important:** Unsigned MSIX packages cannot be installed, even with Developer Mode enabled.
+The Install button will be greyed out until the package is signed.
 
-**Easiest for most users.**
-
-1. Open Windows Settings
-2. Enable Developer Mode:
-   - **Windows 11:** System → For developers (or System → Advanced)
-   - **Windows 10:** Update & Security → For developers
-3. Download and double-click the MSIX package
-4. Click Install
-
-**Note:** Developer Mode can be disabled after installation. The app will continue to work.
-
-### Option 2: Self-Sign the Package
-
-**For users who prefer not to enable Developer Mode or have the Install button greyed out.**
+### Installation Process (Required for All Users)
 
 **⚠️ Requires Administrator privileges**
 
 1. Download **both** files from GitHub:
-   - The MSIX package (e.g., `oathtool-1.2.3.msix`)
-   - The fix script: `FIX-MSIX-INSTALL.ps1`
+   - The MSIX package (e.g., `oathtool-1.2.3.msix`) from Releases
+   - The fix script: `FIX-MSIX-INSTALL.ps1` from the repository
+
 2. Place both files in the same directory
-3. Right-click `FIX-MSIX-INSTALL.ps1` and select "Run as Administrator"
+
+3. **Right-click** `FIX-MSIX-INSTALL.ps1` and select **"Run as Administrator"**
+
 4. The script will:
    - Create a test certificate (CN=TestPublisher)
    - Install it to Trusted Root Certification Authorities
    - Sign the MSIX package
-5. Double-click the MSIX to install
+   - Display installation instructions
+
+5. Double-click the signed MSIX file to install
+
+6. Click **Install** when prompted
+
+**Note:** Developer Mode is **not** required. The signed package will install on any Windows 10/11 system.
 
 ## Why Not Sign Packages in GitHub Actions?
 
@@ -84,8 +81,8 @@ For an open-source project, this adds:
 **Alternative approaches:**
 
 - **Microsoft Store:** If published to Microsoft Store, Microsoft signs packages for free
-- **Self-signing:** Users sign packages themselves using `FIX-MSIX-INSTALL.ps1`
-- **Developer Mode:** Windows built-in mechanism for unsigned package installation
+- **Self-signing:** Users sign packages themselves using `FIX-MSIX-INSTALL.ps1` (current approach)
+- **Purchase code signing certificate:** Sign packages in CI/CD before distribution ($200-500/year)
 
 ## Files Related to MSIX Distribution
 
@@ -159,9 +156,9 @@ To create a new release with MSIX package:
 ### Unsigned Packages
 
 **For end users:**
-- Unsigned packages are safe to install if downloaded from trusted sources (GitHub Releases)
-- Developer Mode slightly lowers security posture by allowing unsigned packages from any source
-- Consider disabling Developer Mode after installation
+- Unsigned packages cannot be installed directly on Windows
+- Users must sign packages themselves using the provided `FIX-MSIX-INSTALL.ps1` script
+- Packages are safe to install if downloaded from trusted sources (GitHub Releases)
 
 **For the project:**
 - GitHub Releases are the authoritative source
