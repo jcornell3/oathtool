@@ -2,32 +2,15 @@ import argparse
 import base64
 import binascii
 import hashlib
-import string
+import hmac as stdlib_hmac
 import struct
 import sys
 import time
 
-trans_5C = bytes(x ^ 0x5C for x in range(256))
-trans_36 = bytes(x ^ 0x36 for x in range(256))
-
-# https://tools.ietf.org/html/rfc3548.html#page-6
-b32_lookup = {letter: ord(letter) - ord('A') for letter in string.ascii_uppercase}
-
-b32_lookup.update((str(number), number + 24) for number in range(2, 8))
-
 
 def hmac(key, msg):
-    # https://www.ietf.org/rfc/rfc2104.txt - sha1, 64 block
-    outer = hashlib.sha1()
-    inner = hashlib.sha1()
-    if len(key) > 64:
-        key = hashlib.sha1(key).digest()
-    key = key + b'\x00' * (64 - len(key))
-    outer.update(key.translate(trans_5C))
-    inner.update(key.translate(trans_36))
-    inner.update(msg)
-    outer.update(inner.digest())
-    return outer.digest()
+    """HMAC-SHA1 implementation using standard library."""
+    return stdlib_hmac.new(key, msg, hashlib.sha1).digest()
 
 
 def pad(input, size=8):
@@ -55,7 +38,6 @@ def generate_otp(key, hotp_value=None):
     """
     # convert HOTP to bytes
     # https://tools.ietf.org/rfc/rfc6238.txt
-    # http://opensource.apple.com//source/python/python-3/python/Modules/structmodule.c
     hotp_value = struct.pack('>q', hotp_value or int(time.time() / 30))
     # convert base32 key to bytes
     try:
@@ -79,9 +61,9 @@ def generate_otp(key, hotp_value=None):
 def get_version():
     """Get package version from importlib.metadata."""
     try:
-        from importlib.metadata import version
+        from importlib.metadata import version, PackageNotFoundError
         return version('oathtool')
-    except Exception:
+    except (ImportError, PackageNotFoundError):
         return 'unknown'
 
 
@@ -104,6 +86,16 @@ def main():
         action='version',
         version=f'oathtool {get_version()}'
     )
+    parser.add_argument(
+        '--totp',
+        action='store_true',
+        help='Generate TOTP code (default behavior, this option is for compatibility)'
+    )
+    parser.add_argument(
+        '-b', '--base32',
+        action='store_true',
+        help='Indicate the secret key is Base32 encoded (validates 32-character length)'
+    )
 
     args = parser.parse_args()
 
@@ -117,6 +109,13 @@ def main():
 
     if not key:
         parser.error('secret key cannot be empty')
+
+    # Validate base32 key length when --base32 flag is provided
+    if args.base32:
+        cleaned_key = clean(key)
+        if len(cleaned_key) != 32:
+            print(f'Error: --base32 flag requires a 32-character secret key, got {len(cleaned_key)} characters', file=sys.stderr)
+            sys.exit(1)
 
     try:
         print(generate_otp(key))

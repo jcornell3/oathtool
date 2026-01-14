@@ -1,7 +1,5 @@
 """
-Unit tests for Windows executable functionality.
-
-Tests the PyInstaller-built executable and MSIX packaging on Windows.
+Unit tests for Windows executable and MSIX packaging.
 """
 
 import os
@@ -16,160 +14,112 @@ pytestmark = pytest.mark.skipif(
     reason="Windows-specific tests"
 )
 
+# Paths
+ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
+EXE_PATH = os.path.join(ROOT_DIR, 'dist', 'oathtool.exe')
+MSIX_DIR = os.path.join(ROOT_DIR, 'msix')
+DIST_DIR = os.path.join(ROOT_DIR, 'dist')
+
+
+def assert_valid_otp(output):
+    """Assert output is a valid 6-digit OTP code."""
+    assert len(output) == 6
+    assert output.isdigit()
+
 
 class TestWindowsExecutable:
     """Tests for the Windows executable."""
 
-    @pytest.fixture
-    def exe_path(self):
-        """Path to the built executable."""
-        return os.path.join(os.path.dirname(__file__), '..', 'dist', 'oathtool.exe')
-
-    def test_executable_exists(self, exe_path):
-        """WIN-001: Executable generation - verify oathtool.exe exists."""
-        if not os.path.exists(exe_path):
+    @pytest.fixture(autouse=True)
+    def require_executable(self):
+        """Skip all tests in this class if executable not built."""
+        if not os.path.exists(EXE_PATH):
             pytest.skip("Executable not built. Run: pyinstaller oathtool.spec")
 
-    def test_executable_functionality(self, exe_path):
-        """WIN-002: Executable functionality - run with key."""
-        if not os.path.exists(exe_path):
-            pytest.skip("Executable not built. Run: pyinstaller oathtool.spec")
-
-        # Test with a known key
+    def test_executable_with_key(self):
+        """Executable produces valid OTP with key argument."""
         result = subprocess.run(
-            [exe_path, 'JBSWY3DPEHPK3PXP'],
-            capture_output=True,
-            text=True,
-            timeout=10
+            [EXE_PATH, 'JBSWY3DPEHPK3PXP'],
+            capture_output=True, text=True, timeout=10
         )
-
         assert result.returncode == 0
-        output = result.stdout.strip()
-        assert len(output) == 6
-        assert output.isdigit()
+        assert_valid_otp(result.stdout.strip())
 
-    def test_executable_no_arguments(self, exe_path):
-        """WIN-002: Executable error handling - no arguments."""
-        if not os.path.exists(exe_path):
-            pytest.skip("Executable not built. Run: pyinstaller oathtool.spec")
-
+    def test_executable_no_arguments(self):
+        """Executable shows error when no key provided."""
         result = subprocess.run(
-            [exe_path],
-            capture_output=True,
-            text=True,
-            timeout=10
+            [EXE_PATH],
+            capture_output=True, text=True, timeout=10
         )
+        assert result.returncode == 2  # argparse error code
+        assert 'provide secret key' in result.stderr.lower()
 
-        assert result.returncode == 1
-        assert 'provide secret key' in result.stdout.lower()
-
-    def test_executable_piped_input(self, exe_path):
-        """WIN-007: Piped input on Windows."""
-        if not os.path.exists(exe_path):
-            pytest.skip("Executable not built. Run: pyinstaller oathtool.spec")
-
+    def test_executable_piped_input(self):
+        """Executable accepts key from stdin."""
         result = subprocess.run(
-            [exe_path],
+            [EXE_PATH],
             input='JBSWY3DPEHPK3PXP',
-            capture_output=True,
-            text=True,
-            timeout=10
+            capture_output=True, text=True, timeout=10
         )
-
         assert result.returncode == 0
-        output = result.stdout.strip()
-        assert len(output) == 6
-        assert output.isdigit()
+        assert_valid_otp(result.stdout.strip())
 
 
 class TestMSIXPackage:
-    """Tests for MSIX package creation and structure."""
+    """Tests for MSIX package structure."""
 
-    @pytest.fixture
-    def msix_dir(self):
-        """Path to MSIX packaging directory."""
-        return os.path.join(os.path.dirname(__file__), '..', 'msix')
-
-    def test_msix_manifest_exists(self, msix_dir):
-        """WIN-004: MSIX manifest file exists."""
-        manifest_path = os.path.join(msix_dir, 'AppxManifest.xml')
-        assert os.path.exists(manifest_path), "AppxManifest.xml not found"
-
-    def test_msix_assets_exist(self, msix_dir):
-        """WIN-004: MSIX assets exist."""
-        assets_dir = os.path.join(msix_dir, 'Assets')
-        assert os.path.exists(assets_dir), "Assets directory not found"
-
-        # Check required logo files
-        required_assets = [
-            'StoreLogo.png',
-            'Square44x44Logo.png',
-            'Square150x150Logo.png',
-            'Wide310x150Logo.png'
-        ]
-
-        for asset in required_assets:
-            asset_path = os.path.join(assets_dir, asset)
-            assert os.path.exists(asset_path), f"{asset} not found"
-
-    def test_msix_build_script_exists(self):
-        """WIN-004: MSIX build script exists."""
-        script_path = os.path.join(os.path.dirname(__file__), '..', 'build-msix.ps1')
-        assert os.path.exists(script_path), "build-msix.ps1 not found"
-
-    def test_msix_manifest_structure(self, msix_dir):
-        """WIN-004: MSIX manifest has correct structure."""
-        manifest_path = os.path.join(msix_dir, 'AppxManifest.xml')
-
+    def test_msix_manifest_structure(self):
+        """MSIX manifest exists and has correct structure."""
+        manifest_path = os.path.join(MSIX_DIR, 'AppxManifest.xml')
         if not os.path.exists(manifest_path):
             pytest.skip("AppxManifest.xml not found")
 
         with open(manifest_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Verify key manifest elements
         assert 'com.jaraco.oathtool' in content
         assert 'OathTool' in content
         assert 'oathtool.exe' in content
         assert 'runFullTrust' in content
 
-    def test_msix_package_exists(self):
-        """WIN-004: Check if MSIX package has been built."""
-        dist_dir = os.path.join(os.path.dirname(__file__), '..', 'dist')
+    def test_msix_assets_exist(self):
+        """Required MSIX assets exist."""
+        assets_dir = os.path.join(MSIX_DIR, 'Assets')
+        if not os.path.exists(assets_dir):
+            pytest.skip("Assets directory not found")
 
-        if not os.path.exists(dist_dir):
+        required_assets = [
+            'StoreLogo.png', 'Square44x44Logo.png',
+            'Square150x150Logo.png', 'Wide310x150Logo.png'
+        ]
+        for asset in required_assets:
+            assert os.path.exists(os.path.join(assets_dir, asset)), f"{asset} not found"
+
+    def test_msix_package_exists(self):
+        """MSIX package has been built and has content."""
+        if not os.path.exists(DIST_DIR):
             pytest.skip("dist directory not found")
 
-        msix_files = [f for f in os.listdir(dist_dir) if f.endswith('.msix')]
-
+        msix_files = [f for f in os.listdir(DIST_DIR) if f.endswith('.msix')]
         if not msix_files:
             pytest.skip("No MSIX package found. Run: .\\build-msix.ps1")
 
-        # If MSIX exists, verify it has content
-        msix_path = os.path.join(dist_dir, msix_files[0])
-        file_size = os.path.getsize(msix_path)
-        assert file_size > 0, "MSIX package is empty"
+        msix_path = os.path.join(DIST_DIR, msix_files[0])
+        assert os.path.getsize(msix_path) > 0, "MSIX package is empty"
 
 
 class TestPyInstallerSpec:
     """Tests for PyInstaller specification file."""
 
-    def test_spec_file_exists(self):
-        """Verify oathtool.spec exists."""
-        spec_path = os.path.join(os.path.dirname(__file__), '..', 'oathtool.spec')
-        assert os.path.exists(spec_path), "oathtool.spec not found"
-
     def test_spec_file_structure(self):
-        """Verify spec file has correct structure."""
-        spec_path = os.path.join(os.path.dirname(__file__), '..', 'oathtool.spec')
-
+        """Spec file exists and has correct structure."""
+        spec_path = os.path.join(ROOT_DIR, 'oathtool.spec')
         if not os.path.exists(spec_path):
             pytest.skip("oathtool.spec not found")
 
         with open(spec_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # Verify key spec file elements
         assert 'Analysis' in content
         assert 'EXE' in content
         assert '__main__.py' in content

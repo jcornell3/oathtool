@@ -1,3 +1,4 @@
 import oathtool
 
-__name__ == '__main__' and oathtool.main()
+if __name__ == '__main__':
+    oathtool.main()
