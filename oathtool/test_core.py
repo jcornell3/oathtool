@@ -40,6 +40,23 @@ class TestHMAC:
         # Empty key
         assert oathtool.hmac(b'', b'msg') == stdlib_hmac.new(b'', b'msg', hashlib.sha1).digest()
 
+    def test_hmac_sha256(self):
+        """HMAC with SHA256 matches stdlib."""
+        key = b'key'
+        msg = b'message'
+        result = oathtool.hmac(key, msg, hashlib.sha256)
+        expected = stdlib_hmac.new(key, msg, hashlib.sha256).digest()
+        assert result == expected
+        assert len(result) == 32  # SHA256 produces 32 bytes
+
+    def test_hmac_sha256_long_key(self):
+        """HMAC-SHA256 with key > 64 bytes."""
+        key = b'a' * 100
+        msg = b'test'
+        result = oathtool.hmac(key, msg, hashlib.sha256)
+        expected = stdlib_hmac.new(key, msg, hashlib.sha256).digest()
+        assert result == expected
+
 
 class TestPad:
     """Tests for the Base32 padding function."""
@@ -141,6 +158,24 @@ class TestGenerateOTP:
         result3 = oathtool.generate_otp('JBSWY3DPEHPK3PXP')
         assert result3 != result1  # Different window, different code
 
+    def test_generate_otp_sha256(self):
+        """SHA256 produces different codes than SHA1."""
+        key = 'JBSWY3DPEHPK3PXP'
+        counter = 12345
+        sha1_code = oathtool.generate_otp(key, hotp_value=counter)
+        sha256_code = oathtool.generate_otp(key, hotp_value=counter, digest=hashlib.sha256)
+        assert sha1_code != sha256_code
+        assert len(sha256_code) == 6
+        assert sha256_code.isdigit()
+
+    def test_generate_otp_sha256_deterministic(self):
+        """SHA256 OTP is deterministic."""
+        key = 'JBSWY3DPEHPK3PXP'
+        counter = 12345
+        code1 = oathtool.generate_otp(key, hotp_value=counter, digest=hashlib.sha256)
+        code2 = oathtool.generate_otp(key, hotp_value=counter, digest=hashlib.sha256)
+        assert code1 == code2
+
 
 class TestRFCCompliance:
     """Tests for RFC 4226 (HOTP) and RFC 6238 (TOTP) compliance."""
@@ -167,4 +202,17 @@ class TestRFCCompliance:
         for timestamp, expected_code in test_vectors.items():
             counter = timestamp // 30
             result = oathtool.generate_otp(secret, counter)
+            assert result == expected_code
+
+    def test_rfc6238_totp_sha256_test_vectors(self):
+        """RFC 6238 Appendix B test vectors (SHA256)."""
+        # SHA256 uses a 32-byte key: "12345678901234567890123456789012"
+        secret = 'GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA'
+        test_vectors = {
+            59: '119246', 1111111109: '084774', 1111111111: '062674',
+            1234567890: '819424', 2000000000: '698825', 20000000000: '737706',
+        }
+        for timestamp, expected_code in test_vectors.items():
+            counter = timestamp // 30
+            result = oathtool.generate_otp(secret, counter, digest=hashlib.sha256)
             assert result == expected_code

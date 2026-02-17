@@ -8,9 +8,9 @@ import sys
 import time
 
 
-def hmac(key, msg):
-    """HMAC-SHA1 implementation using standard library."""
-    return stdlib_hmac.new(key, msg, hashlib.sha1).digest()
+def hmac(key, msg, digest=hashlib.sha1):
+    """HMAC implementation using standard library."""
+    return stdlib_hmac.new(key, msg, digest).digest()
 
 
 def pad(input, size=8):
@@ -29,7 +29,7 @@ def clean(input):
     return input.replace(' ', '')
 
 
-def generate_otp(key, hotp_value=None):
+def generate_otp(key, hotp_value=None, digest=hashlib.sha1):
     """
     >>> generate_otp('MZXW6YTBOJUWU23MNU', 52276810)
     '487656'
@@ -48,8 +48,8 @@ def generate_otp(key, hotp_value=None):
             "Secret keys must be valid Base32 format (A-Z, 2-7).\n"
             "Example: JBSWY3DPEHPK3PXP"
         )
-    # generate HMAC-SHA1 from HOTP based on key
-    HMAC = hmac(key, hotp_value)
+    # generate HMAC from HOTP based on key
+    HMAC = hmac(key, hotp_value, digest)
     # compute hash truncation
     cut = HMAC[-1] & 0x0F
     # encode into smaller number of digits
@@ -96,6 +96,11 @@ def main():
         action='store_true',
         help='Indicate the secret key is Base32 encoded (validates 32-character length)'
     )
+    parser.add_argument(
+        '--sha256',
+        action='store_true',
+        help='Use SHA256 instead of SHA1 for HMAC'
+    )
 
     args = parser.parse_args()
 
@@ -117,8 +122,11 @@ def main():
             print(f'Error: --base32 flag requires a 32-character secret key, got {len(cleaned_key)} characters', file=sys.stderr)
             sys.exit(1)
 
+    # Select hash algorithm
+    digest = hashlib.sha256 if args.sha256 else hashlib.sha1
+
     try:
-        print(generate_otp(key))
+        print(generate_otp(key, digest=digest))
     except ValueError as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
